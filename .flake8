@@ -1,0 +1,50 @@
+[flake8]
+# Maximum line length (match Black)
+max-line-length = 100
+
+# Ignore specific errors
+ignore =
+    # E203: whitespace before ':' (conflicts with Black)
+    E203,
+    # E501: line too long (handled by Black)
+    E501,
+    # W503: line break before binary operator (conflicts with Black)
+    W503,
+    # E402: module level import not at top of file (sometimes needed for config)
+    E402,
+    # F401: imported but unused (sometimes needed for __init__.py)
+    F401
+
+# Exclude paths
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    ENV,
+    .tox,
+    build,
+    dist,
+    *.egg-info,
+    .pytest_cache,
+    .mypy_cache,
+    .coverage,
+    htmlcov,
+    docs/_build,
+    notebooks/.ipynb_checkpoints
+
+# Maximum complexity (McCabe)
+max-complexity = 15
+
+# Show source code for errors
+show-source = true
+
+# Show error codes in output
+show-pep8 = true
+
+# Count errors
+count = true
+
+# Statistics
+statistics = true

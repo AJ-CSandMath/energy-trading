@@ -1,0 +1,107 @@
+# Energy Trading & Portfolio Optimization System
+# Python Dependencies - Latest Stable Versions
+# All versions are pinned for reproducibility
+#
+# Installation: pip install -r requirements.txt
+# For venv compilation issues: pip install --only-binary=:all: -r requirements.txt
+
+# =============================================================================
+# Core Data Processing
+# =============================================================================
+pandas==2.1.4          # DataFrame operations and time-series handling
+numpy==1.26.3         # Numerical computations
+pyarrow==14.0.2      # Parquet file I/O with PyArrow engine
+
+# =============================================================================
+# API & Web Communication
+# =============================================================================
+requests==2.31.0       # HTTP requests for API calls
+urllib3==2.1.0         # HTTP client (requests dependency)
+certifi==2023.11.17    # SSL certificates
+charset-normalizer==3.3.2  # Character encoding detection
+idna==3.6             # Internationalized Domain Names
+
+# =============================================================================
+# Configuration Management
+# =============================================================================
+pyyaml==6.0.1         # YAML configuration file parsing
+python-dotenv==1.0.0   # Environment variable management from .env files
+
+# =============================================================================
+# Machine Learning & Forecasting
+# =============================================================================
+scikit-learn==1.4.0    # Classical ML models, preprocessing, metrics
+joblib==1.3.2          # Model persistence for scikit-learn and XGBoost
+xgboost==2.0.3         # Gradient boosting for time-series forecasting
+tensorflow==2.15.0     # Deep learning framework for LSTM models
+keras==2.15.0          # High-level neural networks API (bundled with TF 2.15)
+h5py==3.10.0           # HDF5 support for Keras model saving
+statsmodels==0.14.1    # ARIMA and statistical time-series models
+patsy==0.5.6           # Statistical formulas (statsmodels dependency)
+
+# =============================================================================
+# Optimization
+# =============================================================================
+cvxpy==1.4.2           # Convex optimization for portfolio optimization
+scipy==1.11.4          # Scientific computing and optimization algorithms
+
+# =============================================================================
+# Visualization & Dashboard
+# =============================================================================
+streamlit==1.30.0      # Interactive web dashboard framework
+plotly==5.18.0         # Interactive plotting library
+kaleido==0.2.1         # Static image export for Plotly
+matplotlib==3.8.2     # Static plotting (for notebooks)
+seaborn==0.13.1        # Statistical visualization
+
+# =============================================================================
+# Testing
+# =============================================================================
+pytest==7.4.3          # Testing framework
+pytest-cov==4.1.0      # Code coverage reporting
+pytest-mock==3.12.0    # Mocking for unit tests
+coverage==7.3.4       # Code coverage measurement
+requests-mock==1.11.0  # Mock HTTP requests for API testing
+responses==0.24.1      # Alternative HTTP mocking library
+pytest-timeout==2.2.0  # Timeout for long-running tests
+pytest-xdist==3.5.0    # Parallel test execution
+
+# =============================================================================
+# Code Quality (optional but recommended)
+# =============================================================================
+black==23.12.1         # Code formatting
+flake8==7.0.0          # Linting
+mypy==1.8.0           # Type checking
+isort==5.13.2          # Import sorting
+pre-commit==3.6.0      # Pre-commit hook framework
+
+# =============================================================================
+# Utilities
+# =============================================================================
+python-dateutil==2.8.2  # Date parsing and manipulation
+tqdm==4.66.1           # Progress bars for long-running operations
+
+# =============================================================================
+# Jupyter Notebook Support
+# =============================================================================
+jupyter==1.0.0         # Jupyter notebook
+ipykernel==6.28.0      # IPython kernel for Jupyter
+ipywidgets==8.1.1      # Interactive widgets for notebooks
+notebook==7.0.6        # Jupyter notebook server
+jupyterlab==4.0.9      # JupyterLab interface
+ipython==8.19.0        # Interactive Python shell
+
+# =============================================================================
+# Optional: Additional Data Sources (commented out by default)
+# =============================================================================
+# yfinance #==0.2.50      # Yahoo Finance data (for benchmarking)
+# alpha_vantage #==2.3.1  # Alpha Vantage API (alternative data source)
+
+# =============================================================================
+# INSTALLATION NOTES
+# =============================================================================
+# For systems with compilation issues (e.g., numpy failing to build):
+#   pip install --only-binary=:all: --prefer-binary -r requirements.txt
+#
+# This forces pip to use pre-compiled binary wheels instead of building from source.
+# All packages in this file have binary wheels available for Windows/Linux/macOS.

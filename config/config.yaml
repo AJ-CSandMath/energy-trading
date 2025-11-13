@@ -1,0 +1,993 @@
+# Energy Trading & Portfolio Optimization System - Configuration File
+# This file contains all configuration settings for the application
+
+# =============================================================================
+# API Configuration
+# =============================================================================
+api:
+  # EIA (Energy Information Administration) API v2 Configuration
+  # Get your free API key from: https://www.eia.gov/opendata/register.php
+  eia:
+    api_key: ${EIA_API_KEY}  # Read from environment variable
+    base_url: "https://api.eia.gov/v2/"
+    timeout: 120  # Request timeout in seconds
+    max_retries: 3  # Maximum number of retry attempts
+    retry_backoff: 2.0  # Exponential backoff multiplier
+
+  # CAISO (California Independent System Operator) OASIS API Configuration
+  # Public API - no authentication required
+  caiso:
+    base_url: "https://oasis.caiso.com/oasisapi/SingleZip"
+    timeout: 120  # Request timeout in seconds (120s recommended for large queries)
+    max_retries: 3
+    retry_backoff: 2.0
+
+# =============================================================================
+# Data Storage Configuration
+# =============================================================================
+data:
+  # Directory paths for data storage
+  raw_data_path: "data/raw"  # Raw data fetched from APIs
+  processed_data_path: "data/processed"  # Cleaned and transformed data
+
+  # Parquet storage settings
+  parquet:
+    compression: "snappy"  # Compression codec: snappy, gzip, brotli, or none
+    partition_by_date: true  # Partition data by year/month for large datasets
+    engine: "pyarrow"  # Parquet engine (pyarrow recommended)
+
+  # Default date range for data fetching (if not specified)
+  default_date_range:
+    years_back: 2  # Fetch last 2 years of data by default
+
+  # Database configuration (optional, for trade logging)
+  # Requires SQLAlchemy: pip install sqlalchemy psycopg2-binary
+  database:
+    # Database connection URL (SQLAlchemy format)
+    # Examples:
+    #   PostgreSQL: postgresql://user:password@localhost:5432/dbname
+    #   MySQL: mysql+pymysql://user:password@localhost:3306/dbname
+    #   SQLite: sqlite:///path/to/database.db
+    url: null  # Set to database URL to enable DB logging (default: disabled)
+
+# =============================================================================
+# EIA Data Sources Configuration
+# =============================================================================
+eia:
+  # Electricity endpoints to fetch
+  # Available endpoints: retail-sales, rto, operating-generator-capacity, etc.
+  electricity_endpoints:
+    - "retail-sales"
+    - "rto"
+    - "operating-generator-capacity"
+
+  # Default data frequency
+  # Options: hourly, daily, monthly, annual
+  default_frequency: "monthly"
+
+  # State codes to fetch (empty list = all states)
+  # Examples: CA, TX, FL, NY, PA, IL, OH, GA, NC, MI
+  states:
+    - "CA"  # California
+    - "TX"  # Texas
+    - "FL"  # Florida
+    - "NY"  # New York
+
+  # Sector codes to fetch
+  # RES = Residential, COM = Commercial, IND = Industrial, TRA = Transportation
+  sectors:
+    - "RES"
+    - "COM"
+    - "IND"
+    - "TRA"
+
+# =============================================================================
+# CAISO Data Sources Configuration
+# =============================================================================
+caiso:
+  # Default pricing nodes to fetch (LMP data)
+  # Key aggregation nodes for California zones
+  default_nodes:
+    - "TH_NP15_GEN-APND"  # NP15 (Northern California)
+    - "TH_SP15_GEN-APND"  # SP15 (Southern California)
+    - "TH_ZP26_GEN-APND"  # ZP26 (Kern)
+
+  # Market types to fetch
+  # DAM = Day-Ahead Market, RTM = Real-Time Market
+  market_types:
+    - "DAM"
+    - "RTM"
+
+  # LMP (Locational Marginal Price) components
+  # LMP = Total price, MCC = Marginal Cost of Congestion,
+  # MLC = Marginal Loss Component, MCE = Marginal Cost of Energy
+  lmp_components:
+    - "LMP"
+    - "MCC"
+    - "MLC"
+    - "MCE"
+
+  # Query names for different data types
+  queries:
+    lmp_day_ahead: "PRC_LMP"  # Day-ahead LMP
+    lmp_real_time: "PRC_INTVL_LMP"  # Real-time 5-minute LMP
+    demand_forecast: "SLD_FCST"  # System load forecast
+    actual_load: "SLD_REN_WIND_SOLAR"  # Actual load including renewables
+
+# =============================================================================
+# Synthetic Data Generation Configuration
+# =============================================================================
+synthetic:
+  # Energy price generation using Ornstein-Uhlenbeck process
+  price:
+    # OU process parameters for mean-reverting price dynamics
+    ou_params:
+      kappa: 1.2        # Mean reversion speed (higher = faster reversion)
+      mu: 50.0          # Long-term mean price ($/MWh)
+      sigma: 15.0       # Volatility parameter
+
+    # Multi-scale seasonality (Fourier series coefficients)
+    seasonality:
+      daily:
+        a1: 5.0         # Daily cosine amplitude
+        b1: -2.0        # Daily sine amplitude
+      weekly:
+        a2: 3.0         # Weekly cosine amplitude
+        b2: 1.0         # Weekly sine amplitude
+      yearly:
+        a3: 10.0        # Yearly cosine amplitude
+        b3: -5.0        # Yearly sine amplitude
+
+    # GARCH(1,1) volatility clustering parameters
+    volatility_clustering:
+      omega: 0.1        # Constant term
+      alpha: 0.15       # ARCH coefficient (lagged squared residual)
+      beta: 0.80        # GARCH coefficient (lagged variance)
+
+    # Jump diffusion parameters (compound Poisson process)
+    # Jump sizes are in percentage points and applied as exp(jump/100)
+    # Example: jump_sigma=2.0 means typical jumps cause ~2% price changes
+    jumps:
+      lambda: 0.02      # Jump intensity (jumps per day, ~7 per year)
+      jump_mu: 0.0      # Mean jump size in percentage points (0=no directional bias)
+      jump_sigma: 2.0   # Jump size volatility in percentage points (typical range: 1.0-5.0)
+
+    # Default settings
+    default_initial_price: 50.0
+    default_frequency: "H"  # Hourly data
+    random_seed: 42
+
+  # Wind generation profiles
+  wind:
+    capacity_mw: 100.0
+    hub_height: 80            # meters
+    turbine_type: "generic_2mw"
+
+    # Capacity factor statistics
+    capacity_factor_mean: 0.35
+    capacity_factor_std: 0.05
+
+    # Power curve parameters
+    cut_in_speed: 3.0         # m/s - minimum wind speed for generation
+    rated_speed: 12.0         # m/s - wind speed at rated power
+    cut_out_speed: 25.0       # m/s - maximum safe wind speed
+
+    # Variability parameters
+    max_ramp_rate: 0.15       # Maximum ramp rate (fraction of capacity per minute)
+    autocorrelation: 0.85     # Temporal persistence (AR(1) coefficient)
+
+    # Weibull distribution for wind speeds
+    # For CF ~35%, need higher wind speeds or adjusted curve
+    weibull_shape: 2.0        # k parameter (2.0 = Rayleigh distribution)
+    weibull_scale: 8.5        # λ parameter (m/s) - increased from 7.5 to achieve realistic CF
+
+    # Intermittency
+    # Reduced to achieve realistic capacity factors
+    outage_rate: 0.005        # Poisson rate for random outages (per day)
+    maintenance_fraction: 0.01  # Fraction of time in maintenance (~3.65 days/year)
+
+    random_seed: 43
+
+  # Solar generation profiles
+  solar:
+    capacity_mw: 100.0
+
+    # System configuration
+    tilt_angle: 30            # degrees from horizontal
+    azimuth: 180              # degrees (180 = south-facing)
+    latitude: 35.0            # degrees (e.g., California)
+    longitude: -120.0         # degrees
+
+    # Capacity factor statistics
+    capacity_factor_mean: 0.25
+    capacity_factor_std: 0.03
+
+    # PV system parameters
+    module_efficiency: 0.18   # 18% module efficiency
+    inverter_efficiency: 0.97 # 97% inverter efficiency
+    temperature_coeff: -0.004 # -0.4% per °C above 25°C
+
+    # Cloud cover modeling (Beta distribution)
+    cloud_alpha: 2.0          # Beta distribution α (shape)
+    cloud_beta: 5.0           # Beta distribution β (shape, right-skewed)
+    cloud_persistence: 0.90   # Temporal correlation (AR(1))
+
+    # Degradation
+    annual_degradation: 0.005 # 0.5% per year
+
+    random_seed: 44
+
+  # Correlation settings
+  correlation:
+    # Negative correlation between renewable generation and prices
+    renewable_price_correlation: -0.6  # -0.6 = moderate negative correlation
+    correlation_method: "linear"       # "linear" or "supply_curve"
+
+  # Stress testing scenarios
+  stress_scenarios:
+    high_volatility:
+      volatility_multiplier: 2.5
+      duration_days: 7
+
+    low_wind:
+      reduction_factor: 0.5   # 50% reduction
+      duration_days: 5
+
+    low_solar:
+      reduction_factor: 0.3   # 70% reduction
+      duration_days: 3
+
+    price_spike:
+      spike_magnitude: 200.0  # $/MWh above normal
+      spike_duration_hours: 4
+
+    renewable_drought:
+      wind_reduction: 0.6
+      solar_reduction: 0.4
+      duration_days: 10
+
+# =============================================================================
+# Machine Learning Model Configuration (for future phases)
+# =============================================================================
+models:
+  # Directory for saving trained models
+  model_save_path: "models/saved"
+
+  # Random seed for reproducibility
+  random_seed: 42
+
+  # Train/test split ratio
+  train_test_split: 0.8
+
+  # Forecasting configuration
+  forecasting:
+    # Look-back window (hours)
+    lookback_hours: 168  # 7 days
+
+    # Forecast horizon (hours)
+    forecast_horizon: 24  # 1 day ahead
+
+    # Model types to train
+    model_types:
+      - "arima"
+      - "xgboost"
+      - "lstm"
+
+  # Feature engineering
+  features:
+    # Lag features (hours)
+    lags: [1, 2, 3, 6, 12, 24, 48, 168]
+
+    # Rolling window features (hours)
+    rolling_windows: [24, 48, 168]
+
+    # Time-based features
+    time_features:
+      - "hour"
+      - "day_of_week"
+      - "month"
+      - "is_weekend"
+      - "is_holiday"
+
+  # ARIMA model configuration
+  arima:
+    default_order: [1, 1, 1]  # (p, d, q) - AR order, differencing, MA order
+    seasonal_order: null      # [P, D, Q, s] for seasonal ARIMA, null for non-seasonal
+    method: "lbfgs"           # Optimization method
+    maxiter: 50               # Maximum iterations for optimization
+
+  # XGBoost model configuration
+  xgboost:
+    n_estimators: 100         # Number of boosting rounds
+    max_depth: 6              # Maximum tree depth
+    learning_rate: 0.1        # Step size shrinkage
+    subsample: 0.8            # Subsample ratio of training instances
+    colsample_bytree: 0.8     # Subsample ratio of columns
+    min_child_weight: 1       # Minimum sum of instance weight in a child
+    gamma: 0                  # Minimum loss reduction for split
+    reg_alpha: 0              # L1 regularization
+    reg_lambda: 1             # L2 regularization
+    early_stopping_rounds: 10 # Stop if no improvement for N rounds
+
+  # LSTM model configuration
+  lstm:
+    units: 50                 # Number of LSTM units per layer
+    layers: 2                 # Number of LSTM layers
+    dropout: 0.2              # Dropout rate for regularization
+    epochs: 50                # Training epochs
+    batch_size: 32            # Batch size for training
+    validation_split: 0.2     # Fraction of training data for validation
+    patience: 10              # Early stopping patience
+    optimizer: "adam"         # Optimizer (adam, rmsprop, sgd)
+    loss: "mse"               # Loss function (mse, mae, huber)
+
+  # Ensemble configuration
+  ensemble:
+    method: "weighted_average"  # weighted_average, stacking, voting
+    weight_strategy: "inverse_rmse"  # equal, inverse_rmse, inverse_mae, custom
+    custom_weights: null      # Dict of {model_name: weight} if weight_strategy=custom
+
+  # Evaluation configuration
+  evaluation:
+    metrics:
+      - "mae"                 # Mean Absolute Error
+      - "rmse"                # Root Mean Squared Error
+      - "mape"                # Mean Absolute Percentage Error
+      - "directional_accuracy"  # Percentage of correct direction predictions
+    confidence_level: 0.95    # Confidence level for prediction intervals (95%)
+
+  # Renewable generation forecasting configuration
+  renewable_forecasting:
+    # Lookback and horizon for renewable forecasts
+    lookback_hours: 168  # 7 days
+    forecast_horizon: 24  # 1 day ahead
+
+    # Model types to train for renewables
+    model_types:
+      - "xgboost"
+      - "quantile_xgboost"
+      - "lstm"
+
+  # Renewable-specific feature engineering
+  renewable_features:
+    # Weather feature lags (hours)
+    weather_lags: [1, 2, 3, 6, 12, 24]
+
+    # Weather rolling windows (hours)
+    weather_rolling_windows: [6, 12, 24]
+
+    # Capacity factor lags
+    capacity_factor_lags: [1, 6, 24, 168]
+
+    # Ramp rate features
+    include_ramp_features: true
+    ramp_window: 3  # hours for ramp rate calculation
+
+    # Seasonal indicators
+    include_seasonal: true
+
+  # Wind forecasting specific
+  wind_forecasting:
+    capacity_mw: 100.0  # Default capacity for normalization
+
+    # Quantile regression settings
+    quantiles: [0.1, 0.25, 0.5, 0.75, 0.9]  # Quantiles to predict
+
+    # Physical constraints
+    min_generation: 0.0
+    max_generation: null  # null = use capacity_mw
+
+    # Curtailment settings
+    grid_capacity_mw: 90.0  # Grid injection limit
+    negative_price_threshold: -5.0  # $/MWh - curtail below this
+    curtailment_ramp_rate: 0.2  # Max curtailment ramp (fraction/min)
+
+  # Solar forecasting specific
+  solar_forecasting:
+    capacity_mw: 100.0
+
+    # Quantile regression settings
+    quantiles: [0.1, 0.25, 0.5, 0.75, 0.9]
+
+    # Physical constraints
+    min_generation: 0.0
+    max_generation: null
+
+    # Daylight filtering
+    filter_nighttime: true  # Exclude nighttime from training
+    min_irradiance_threshold: 10.0  # W/m² - minimum for generation
+
+    # Curtailment settings
+    grid_capacity_mw: 90.0
+    negative_price_threshold: -5.0
+    curtailment_ramp_rate: 0.3  # Solar can curtail faster than wind
+
+  # Quantile XGBoost configuration
+  # IMPORTANT: Requires xgboost>=2.0.0 for quantile regression support
+  quantile_xgboost:
+    n_estimators: 150
+    max_depth: 5
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    min_child_weight: 3
+    gamma: 0.1
+    reg_alpha: 0.1
+    reg_lambda: 1.0
+
+  # Monte Carlo simulation configuration
+  monte_carlo:
+    n_scenarios: 1000  # Number of scenarios to generate
+    random_seed: 45
+
+    # Correlation settings
+    wind_solar_correlation: -0.2  # Slight negative correlation
+
+    # Variability multipliers for scenarios
+    wind_std_multiplier: 0.15  # 15% of forecast as std
+    solar_std_multiplier: 0.20  # 20% of forecast as std
+
+    # Stress test scenarios
+    stress_scenarios:
+      low_wind:
+        reduction_factor: 0.4  # 60% reduction
+        duration_hours: 72
+
+      low_solar:
+        reduction_factor: 0.5  # 50% reduction
+        duration_hours: 48
+
+      renewable_drought:
+        wind_reduction: 0.5
+        solar_reduction: 0.6
+        duration_hours: 120  # 5 days
+
+      high_variability:
+        wind_std_multiplier: 0.30  # 2x normal variability
+        solar_std_multiplier: 0.40
+        duration_hours: 48
+
+# =============================================================================
+# Trading Strategy Configuration
+# =============================================================================
+strategies:
+  # Path to detailed strategy configuration file
+  config_file: "config/strategies.yaml"
+
+  # Quick enable/disable all strategies
+  enabled: true
+
+  # Default strategy types to load
+  default_strategies:
+    - "mean_reversion"
+    - "momentum"
+    - "spread_trading"
+    - "renewable_arbitrage"
+
+  # Strategy execution mode
+  execution_mode: "paper"  # "paper" (simulated) or "live" (real trading)
+
+  # Note: Detailed strategy parameters are in config/strategies.yaml
+  # This allows easier parameter tuning without modifying main config
+
+  # Legacy risk management (for backward compatibility, use strategies.yaml for new configs)
+  risk:
+    max_position_size: 0.2  # Maximum 20% of portfolio per position
+    stop_loss: 0.05  # 5% stop loss
+    take_profit: 0.10  # 10% take profit
+
+# =============================================================================
+# Portfolio Optimization Configuration
+# =============================================================================
+optimization:
+  # Global optimization settings
+  solver: "ECOS"  # CVXPY solver: ECOS, SCS, OSQP, CLARABEL
+  regularization: 1e-5  # Regularization for numerical stability
+  max_iterations: 1000  # Maximum solver iterations
+  verbose: false  # Solver verbosity
+
+  # Default optimization method
+  default_method: "mean_variance"  # mean_variance, risk_parity, black_litterman, min_cvar
+
+  # Mean-Variance Optimization settings
+  mean_variance:
+    # Objective function
+    objective: "max_sharpe"  # max_sharpe, min_risk, max_return, risk_return_tradeoff
+    risk_aversion: 1.0  # Risk aversion parameter (for risk_return_tradeoff objective)
+
+    # Efficient frontier computation
+    compute_efficient_frontier: true
+    n_points: 50  # Number of points on efficient frontier
+
+    # Return estimation
+    return_estimation: "historical_mean"  # historical_mean, exponential_weighted
+    ewma_span: 60  # Span for exponential weighted moving average (if used)
+
+    # Covariance estimation
+    covariance_estimation: "sample"  # sample, ledoit_wolf, exponential_weighted
+    covariance_window: 252  # Rolling window for covariance (trading days)
+
+    # Risk-free rate (annual, for Sharpe ratio)
+    risk_free_rate: 0.02  # 2% annual
+
+  # Risk Parity Optimization settings
+  risk_parity:
+    # Target risk contributions (null = equal risk contribution)
+    target_risk_contributions: null  # Dict of {asset: contribution} or null for equal
+
+    # Optimization method
+    method: "SLSQP"  # scipy.optimize method: SLSQP, trust-constr
+    max_iterations: 500
+    tolerance: 1e-8
+
+    # Initial guess strategy
+    initial_guess: "equal_weight"  # equal_weight, inverse_volatility, random
+
+  # Black-Litterman Optimization settings
+  black_litterman:
+    # Market parameters
+    tau: 0.05  # Uncertainty in prior estimate (typical: 0.01-0.10)
+    risk_aversion: 2.5  # Market risk aversion coefficient
+
+    # View confidence
+    default_view_confidence: 0.25  # Default confidence in views (if not specified per view)
+    view_confidence_method: "idzorek"  # idzorek, he_litterman, custom
+
+    # Prior distribution
+    prior_method: "market_implied"  # market_implied, historical, custom
+    market_weights: null  # Market capitalization weights (if prior_method=market_implied)
+
+    # Renewable-specific views
+    renewable_views:
+      enabled: true
+      generation_correlation: -0.6  # Correlation between renewable generation and prices
+      confidence_multiplier: 1.0  # Multiplier for renewable view confidence
+
+  # Minimum CVaR Optimization settings
+  min_cvar:
+    # CVaR parameters
+    confidence_level: 0.95  # 95% CVaR
+    n_scenarios: 10000  # Number of scenarios for CVaR calculation
+
+    # Scenario generation method
+    scenario_method: "historical_bootstrap"  # historical_bootstrap, monte_carlo, block_bootstrap
+    block_size: 5  # Block size for block bootstrap (if used)
+
+    # Return target constraint
+    min_return: null  # Minimum target return (null = no constraint)
+
+  # Portfolio constraints
+  constraints:
+    # Weight bounds
+    min_weight: 0.0  # Minimum weight per asset (0.0 = no short selling)
+    max_weight: 0.35  # Maximum weight per asset (35%)
+
+    # Sector/group constraints
+    max_sector_weight: 0.50  # Maximum weight per sector (50%)
+    sector_mapping: {}  # Dict of {asset: sector} for sector constraints
+
+    # Portfolio leverage
+    max_leverage: 1.0  # Maximum leverage (1.0 = fully invested, no leverage)
+    min_leverage: 0.95  # Minimum leverage (allow some cash)
+
+    # Turnover constraints
+    max_turnover: null  # Maximum turnover per rebalancing (null = no limit)
+    turnover_penalty: 0.0  # Penalty coefficient for turnover in objective
+
+    # Concentration limits
+    max_concentration: 0.60  # Maximum weight in top N holdings
+    concentration_n: 3  # Number of top holdings for concentration limit
+
+    # Liquidity constraints
+    min_liquidity: null  # Minimum average daily volume (null = no constraint)
+    max_position_vs_adv: 0.10  # Maximum position size as fraction of avg daily volume
+    liquidity_data: {}  # Dict of {asset: avg_daily_volume}
+
+  # Renewable-specific constraints
+  renewable_constraints:
+    # Capacity factor constraints (fraction of nameplate capacity)
+    capacity_factors:
+      enabled: true
+      min_capacity_factor: 0.15  # Minimum capacity factor (e.g., 15% for wind)
+      max_capacity_factor: 0.95  # Maximum capacity factor
+      asset_capacities: {}  # Dict of {asset: capacity_mw} for renewable assets
+
+    # Grid injection limits
+    grid_limits:
+      enabled: true
+      max_injection_mw: 1000.0  # Maximum grid injection capacity (MW)
+      renewable_assets: []  # List of renewable assets subject to grid limits
+
+    # Curtailment constraints
+    curtailment:
+      enabled: true
+      max_curtailment_pct: 0.20  # Maximum 20% curtailment allowed
+      curtailment_cost: 5.0  # Cost per MWh of curtailed energy
+
+    # Renewable Energy Credit (REC) constraints
+    recs:
+      enabled: false
+      min_rec_percentage: 0.0  # Minimum portfolio percentage from REC-eligible renewables
+      rec_value: 10.0  # Value per MWh of REC-eligible generation ($/MWh)
+
+  # Renewable-specific objectives
+  renewable_objectives:
+    # Maximize renewable utilization
+    max_utilization:
+      enabled: false
+      weight: 0.1  # Weight in multi-objective optimization
+
+    # Minimize curtailment
+    min_curtailment:
+      enabled: true
+      weight: 0.15  # Weight in objective function
+
+    # Maximize REC value
+    max_recs:
+      enabled: false
+      weight: 0.05
+
+  # Multi-period optimization settings
+  multi_period:
+    enabled: false  # Enable dynamic multi-period optimization
+
+    # Time horizon
+    horizon_days: 90  # Optimization horizon (days)
+    rebalance_frequency: "weekly"  # daily, weekly, monthly
+
+    # Transaction costs
+    transaction_costs:
+      fixed_cost: 5.0  # Fixed cost per trade ($)
+      proportional_cost: 0.001  # Proportional cost (0.1% of trade value)
+      bid_ask_spread: 0.0005  # Half-spread (0.05% each side)
+
+    # Dynamic constraints
+    dynamic_constraints:
+      # Turnover constraints
+      max_turnover_per_period: 0.30  # Maximum 30% turnover per rebalancing
+
+      # Path-dependent constraints
+      min_holding_period: 1  # Minimum periods to hold a position
+
+      # Market impact
+      market_impact:
+        enabled: false
+        impact_coefficient: 0.1  # Linear market impact coefficient
+
+  # Rebalancing settings
+  rebalancing:
+    # Trigger conditions
+    trigger_method: "time_based"  # time_based, threshold_based, hybrid
+
+    # Time-based rebalancing
+    frequency: "monthly"  # daily, weekly, monthly, quarterly, annual
+    day_of_month: 1  # Day of month for monthly rebalancing
+    day_of_week: "Monday"  # Day of week for weekly rebalancing
+
+    # Threshold-based rebalancing
+    drift_threshold: 0.05  # Rebalance if any weight drifts > 5% from target
+    correlation_threshold: 0.20  # Rebalance if correlations change > 20%
+
+    # Rebalancing bands (no-trade zones)
+    rebalancing_bands:
+      enabled: true
+      band_width: 0.02  # ±2% bands around target weights
+
+    # Minimum trade size
+    min_trade_size: 100.0  # Minimum trade size ($) to avoid tiny trades
+
+  # Backtesting configuration
+  backtesting:
+    # Historical simulation settings
+    initial_capital: 1000000.0  # Initial portfolio value ($1M)
+
+    # Rolling window optimization
+    rolling_window: 252  # Days of data for each optimization
+    step_size: 21  # Days to roll forward (21 ≈ 1 month)
+
+    # Out-of-sample testing
+    train_test_split: 0.70  # 70% training, 30% testing
+    expanding_window: true  # Use expanding window vs rolling window
+
+    # Performance attribution
+    attribution:
+      enabled: true
+      benchmark: null  # Benchmark returns for comparison (null = no benchmark)
+      attribution_method: "brinson"  # brinson, factor_based
+
+    # Risk monitoring during backtest
+    risk_monitoring:
+      enabled: true
+      var_limit: 0.10  # Stop if VaR exceeds 10%
+      drawdown_limit: 0.20  # Stop if drawdown exceeds 20%
+      leverage_limit: 1.5  # Stop if leverage exceeds 1.5x
+
+# =============================================================================
+# Risk Analytics Configuration
+# =============================================================================
+risk:
+  # Value at Risk (VaR) settings
+  var:
+    # Confidence levels for VaR calculation
+    confidence_levels: [0.90, 0.95, 0.99]  # 90%, 95%, 99%
+
+    # Default confidence level
+    default_confidence: 0.95
+
+    # VaR calculation method
+    method: "historical"  # "historical" or "parametric"
+
+    # Time horizon (days)
+    horizon: 1
+
+    # Minimum observations required for VaR calculation
+    min_observations: 30
+
+  # Conditional Value at Risk (CVaR / Expected Shortfall) settings
+  cvar:
+    # Use same confidence levels as VaR
+    confidence_levels: [0.90, 0.95, 0.99]
+    default_confidence: 0.95
+    method: "historical"
+
+  # Correlation analysis settings
+  correlation:
+    # Rolling window for correlation calculation (days)
+    window: 60
+
+    # Correlation method
+    method: "pearson"  # "pearson", "spearman", "kendall"
+
+    # Minimum periods for correlation calculation
+    min_periods: 30
+
+    # Threshold for high correlation warning
+    high_correlation_threshold: 0.7
+
+  # Volatility settings
+  volatility:
+    # Rolling window for realized volatility (days)
+    window: 252  # 1 year
+
+    # Annualization factor (trading days per year)
+    periods_per_year: 252
+
+    # EWMA lambda for implied volatility proxy (RiskMetrics standard: 0.94)
+    lambda_ewma: 0.94
+
+  # Risk decomposition settings
+  decomposition:
+    # Minimum contribution to include in reports (percentage)
+    min_contribution: 0.01  # 1%
+
+  # Stress testing scenarios
+  stress_scenarios:
+    # Historical scenarios
+    historical:
+      texas_freeze_2021:
+        description: "February 2021 Texas freeze"
+        price_shock: -0.50  # -50% price drop
+        wind_shock: -0.80  # -80% wind generation
+        solar_shock: -0.30  # -30% solar generation
+        duration_days: 7
+
+      california_heatwave_2020:
+        description: "August 2020 California heatwave"
+        price_shock: 2.0  # +200% price spike
+        wind_shock: -0.40  # -40% wind (low wind during heat)
+        solar_shock: 0.20  # +20% solar (high irradiance)
+        duration_days: 3
+
+    # Hypothetical scenarios
+    hypothetical:
+      renewable_drought:
+        description: "Extended low renewable generation"
+        wind_shock: -0.60  # -60% wind
+        solar_shock: -0.50  # -50% solar
+        price_shock: 0.80  # +80% prices (supply shortage)
+        duration_days: 10
+
+      price_spike:
+        description: "Extreme price spike event"
+        price_shock: 3.0  # +300% price spike
+        wind_shock: 0.0  # No change
+        solar_shock: 0.0  # No change
+        duration_days: 1
+
+      volatility_shock:
+        description: "Market volatility surge"
+        volatility_multiplier: 3.0  # 3x normal volatility
+        duration_days: 14
+
+      renewable_curtailment:
+        description: "Grid curtailment of renewables"
+        wind_curtailment: 0.50  # 50% curtailed
+        solar_curtailment: 0.50  # 50% curtailed
+        price_shock: -0.30  # -30% prices (oversupply)
+        duration_days: 5
+
+  # Information ratio settings
+  information_ratio:
+    # Benchmark for comparison (if null, uses zero return)
+    benchmark: null  # Can be set to benchmark returns Series
+
+    # Annualization factor
+    periods_per_year: 252
+
+  # Risk reporting settings
+  reporting:
+    # Include in risk reports
+    include_var_backtest: true
+    include_correlation_heatmap: true
+    include_risk_decomposition: true
+    include_scenario_analysis: true
+
+    # Rolling VaR/CVaR settings (for performance optimization)
+    rolling_var:
+      enabled: true  # Enable rolling VaR/CVaR calculations
+      window: 60  # Rolling window size (days)
+      max_data_points: 10000  # Skip rolling calculations if series exceeds this length
+      min_periods: 30  # Minimum observations required per window
+
+    # Chart settings
+    charts:
+      correlation_colorscale: "RdYlGn"  # Red-Yellow-Green diverging
+      var_color: "#d62728"  # Red
+      cvar_color: "#ff7f0e"  # Orange
+
+# =============================================================================
+# Logging Configuration
+# =============================================================================
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+
+  # Log file path
+  log_file: "logs/energy_trading.log"
+
+  # Log format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # Date format
+  date_format: "%Y-%m-%d %H:%M:%S"
+
+  # Log rotation
+  rotation:
+    max_bytes: 10485760  # 10 MB
+    backup_count: 5  # Keep 5 backup log files
+
+# =============================================================================
+# Dashboard Configuration (for future phases)
+# =============================================================================
+dashboard:
+  # Streamlit app settings
+  title: "Energy Trading & Portfolio Optimization Dashboard"
+  page_icon: "⚡"
+  layout: "wide"  # "centered" or "wide"
+  initial_sidebar_state: "expanded"  # "auto", "expanded", "collapsed"
+
+  # Update and refresh settings
+  update_frequency: 300  # Auto-refresh interval in seconds (5 minutes)
+  enable_auto_refresh: false  # Enable automatic data refresh
+
+  # Visualization settings
+  charts:
+    theme: "plotly_white"  # "plotly", "plotly_white", "plotly_dark", "ggplot2", "seaborn"
+    default_height: 400  # Default chart height in pixels
+    default_width: 800   # Default chart width in pixels
+    color_scheme: "default"  # "default", "colorblind", "high_contrast"
+
+  # Page-specific settings
+  pages:
+    market_overview:
+      default_asset: "energy"  # Default asset to display
+      default_timeframe: "1M"  # 1D, 1W, 1M, 3M, 1Y, All
+      default_chart_type: "line"  # line, candlestick, area
+      show_volume: true
+      refresh_interval: 60  # Seconds (1 minute for market data)
+
+    price_forecasts:
+      default_models: ["ensemble"]  # Models to show by default
+      default_horizon: 24  # Hours
+      default_confidence: 0.95  # 95%
+      max_horizon: 168  # Maximum forecast horizon (1 week)
+      show_historical_accuracy: true
+
+    trading_strategies:
+      default_strategy: "mean_reversion"  # Default strategy to display
+      default_backtest_period: 365  # Days
+      show_signals_on_chart: true
+      max_strategies_compare: 4  # Maximum strategies to compare simultaneously
+
+    portfolio_optimization:
+      default_method: "mean_variance"  # mean_variance, risk_parity, black_litterman, min_cvar
+      default_objective: "max_sharpe"  # max_sharpe, min_risk, max_return
+      show_efficient_frontier: true
+      efficient_frontier_points: 50  # Number of points to compute
+
+    risk_analytics:
+      default_confidence_level: 0.95  # 95%
+      default_var_method: "historical"  # historical, parametric
+      default_horizon: 1  # Days
+      show_stress_tests: true
+      default_scenarios: ["renewable_drought", "price_spike"]  # Default scenarios to show
+
+  # Data source settings
+  data_sources:
+    default_source: "synthetic"  # "synthetic", "real"
+    synthetic_data:
+      default_start_date: "2023-01-01"
+      default_end_date: "2024-12-31"
+      default_frequency: "H"  # Hourly
+    real_data:
+      preferred_source: "caiso"  # "eia", "caiso"
+      cache_duration: 3600  # Cache real data for 1 hour
+
+  # Default date ranges
+  date_ranges:
+    default_range: "1Y"  # Default date range for all pages
+    min_date: "2020-01-01"  # Minimum selectable date
+    max_date: null  # Maximum selectable date (null = today)
+
+  # Interactive controls defaults
+  controls:
+    # Strategy parameters
+    mean_reversion:
+      window: [10, 50, 20]  # [min, max, default]
+      num_std: [1.0, 3.0, 2.0]
+      entry_threshold: [0.7, 1.0, 0.9]
+
+    momentum:
+      fast_window: [5, 30, 10]
+      slow_window: [20, 100, 30]
+      signal_threshold: [0.01, 0.10, 0.02]
+
+    spread_trading:
+      lookback_window: [30, 120, 60]
+      entry_z_score: [1.0, 3.0, 2.0]
+      exit_z_score: [0.0, 1.0, 0.5]
+
+    renewable_arbitrage:
+      forecast_horizon: [6, 72, 24]
+      generation_threshold_high: [0.5, 0.9, 0.7]
+      generation_threshold_low: [0.1, 0.5, 0.3]
+
+    # Optimization constraints
+    optimization:
+      min_weight: [0.0, 0.2, 0.0]  # [min, max, default]
+      max_weight: [0.1, 1.0, 0.3]
+      risk_aversion: [0.5, 5.0, 2.0]
+      allow_short: false
+
+  # Performance settings
+  performance:
+    cache_ttl: 3600  # Cache time-to-live in seconds (1 hour)
+    max_cache_size: 1000  # Maximum number of cached items
+    lazy_load: true  # Lazy load data and models
+    parallel_processing: false  # Enable parallel processing (experimental)
+
+  # Export settings
+  export:
+    default_format: "csv"  # csv, json, parquet
+    include_metadata: true  # Include metadata in exports
+    compress: false  # Compress exported files
+
+  # UI customization
+  ui:
+    show_sidebar_logo: false  # Show logo in sidebar
+    show_footer: true  # Show footer with system info
+    show_tooltips: true  # Show help tooltips
+    compact_mode: false  # Use compact layout
+
+# =============================================================================
+# Testing Configuration
+# =============================================================================
+testing:
+  # Pytest settings
+  test_data_path: "tests/data"
+
+  # Mock API responses
+  use_mock_data: false
+
+  # Code coverage target
+  coverage_target: 80  # 80% code coverage

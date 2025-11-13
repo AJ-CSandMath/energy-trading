@@ -1,0 +1,380 @@
+# Energy Trading & Portfolio Optimization System - Git Ignore File
+
+# =============================================================================
+# Python-specific
+# =============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Code quality
+.ruff_cache/
+
+# Pre-commit
+.pre-commit-config.yaml.bak
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*-checkpoint.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# =============================================================================
+# Environment & Secrets (CRITICAL - NEVER COMMIT)
+# =============================================================================
+.env                    # Environment variables with API keys
+.env.local
+.env.*.local
+*.pem                   # Private keys
+*.key                   # Private keys
+*.cert                  # Certificates
+credentials.json        # Credentials
+secrets.yaml            # Secrets
+config.local.yaml       # Local configuration overrides
+
+# =============================================================================
+# IDE & Editors
+# =============================================================================
+# VS Code
+.vscode/
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.history/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+*~
+Session.vim
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# macOS
+# =============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# =============================================================================
+# Windows
+# =============================================================================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# =============================================================================
+# Linux
+# =============================================================================
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# Data & Models (TOO LARGE FOR GIT)
+# =============================================================================
+# Raw data files
+data/raw/*
+!data/raw/.gitkeep
+
+# Processed data files
+data/processed/*
+!data/processed/.gitkeep
+
+# Data file formats - scoped to data directories only
+# (no global ignore to allow CSV/Parquet in docs, examples, etc.)
+# Exception: Keep small sample/test data
+!tests/data/*.csv
+!tests/data/*.parquet
+
+# Trained models
+models/saved/*
+!models/saved/.gitkeep
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.pb
+*.ckpt
+*.pth
+*.pt
+
+# TensorFlow saved models
+saved_model/
+checkpoint/
+
+# =============================================================================
+# Logs & Outputs
+# =============================================================================
+logs/
+*.log
+logs/*
+!logs/.gitkeep
+
+# Output files
+outputs/
+results/
+reports/
+*.out
+*.err
+
+# =============================================================================
+# Temporary Files
+# =============================================================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# =============================================================================
+# Database Files
+# =============================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+
+# =============================================================================
+# Archive Files
+# =============================================================================
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Exception: Keep documentation archives if needed
+!docs/*.zip
+
+# =============================================================================
+# Streamlit
+# =============================================================================
+.streamlit/secrets.toml
+
+# =============================================================================
+# Profiling & Benchmarking
+# =============================================================================
+*.prof
+*.lprof
+.benchmarks/
+
+# =============================================================================
+# Documentation Build
+# =============================================================================
+docs/_build/
+docs/_static/generated/
+
+# =============================================================================
+# Package Manager Locks (Optional - uncomment if you want to ignore)
+# =============================================================================
+# requirements-dev.txt.lock
+# poetry.lock
+# Pipfile.lock
+
+# =============================================================================
+# Custom Project-Specific
+# =============================================================================
+# Add any custom files or directories specific to your workflow here
+scratch/
+sandbox/
+experiments/
+
+# =============================================================================
+# AI Assistant Files (kept locally, not published)
+# =============================================================================
+CLAUDE.md
+.claude/
+README-old.md
+
+# =============================================================================
+# Duplicate/Temporary Folders
+# =============================================================================
+venv/                   # Duplicate venv (using .venv)
+temp_check/             # Temporary check folder
+notebooks/data/         # Empty data folder in notebooks
+test_data/              # Test data folder
+notebooks/logs/         # Duplicate logs folder
+
+# =============================================================================
+# Runtime Artifacts
+# =============================================================================
+.coverage               # Coverage report
+*.log                   # Log files (already covered above but making explicit)

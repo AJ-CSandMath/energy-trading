@@ -1,0 +1,144 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "energy-trading"
+version = "1.0.0"
+description = "Energy Trading & Portfolio Optimization System with Renewable Energy Focus"
+authors = [{name = "Your Name", email = "your.email@example.com"}]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "GPL-3.0"}
+keywords = ["energy", "trading", "portfolio", "optimization", "renewable", "forecasting", "backtesting"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "License :: OSI Approved :: GPL-3.0 License",
+    "Programming Language :: Python :: 3.10",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/energy-trading"
+Documentation = "https://github.com/yourusername/energy-trading/blob/main/README.md"
+Repository = "https://github.com/yourusername/energy-trading"
+Issues = "https://github.com/yourusername/energy-trading/issues"
+
+# =============================================================================
+# Black Configuration (Code Formatting)
+# =============================================================================
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | env
+  | ENV
+  | \.tox
+  | \.pytest_cache
+  | \.mypy_cache
+  | build
+  | dist
+  | .*\.egg-info
+)/
+'''
+
+# =============================================================================
+# isort Configuration (Import Sorting)
+# =============================================================================
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+# Import sections
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+known_first_party = ["src"]
+
+# Skip files
+skip_glob = [
+    "*/.venv/*",
+    "*/venv/*",
+    "*/env/*",
+    "*/.tox/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/.pytest_cache/*",
+    "*/.mypy_cache/*",
+    "*/__pycache__/*",
+    "*.egg-info/*"
+]
+
+# =============================================================================
+# mypy Configuration (Type Checking)
+# =============================================================================
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Gradual typing - start permissive
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+# Allow untyped calls (for third-party libraries without stubs)
+allow_untyped_calls = true
+
+# Ignore missing imports for packages without type stubs
+ignore_missing_imports = true
+
+# Exclude paths
+exclude = [
+    "venv/",
+    ".venv/",
+    "build/",
+    "dist/",
+    "tests/",  # Don't type-check tests initially
+]
+
+# =============================================================================
+# Coverage Configuration
+# =============================================================================
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/.venv/*",
+    "*/venv/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+
+# Fail if coverage below threshold
+fail_under = 80
+
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"

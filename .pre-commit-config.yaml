@@ -1,0 +1,86 @@
+# Pre-commit hooks for Energy Trading & Portfolio Optimization System
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+        args: ['--safe']
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-toml
+        name: Check TOML syntax
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: debug-statements
+        name: Check for debug statements
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+        args: ['--fix=lf']
+
+  # Python import sorting
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: Sort imports (isort)
+        args: ['--profile', 'black', '--line-length', '100']
+
+  # Python code formatting
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        name: Format code (black)
+        args: ['--line-length', '100']
+        language_version: python3.10
+
+  # Python linting
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        name: Lint code (flake8)
+        args: ['--config', '.flake8']
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-bugbear
+
+  # Python type checking (optional - can be slow)
+  # Uncomment to enable mypy in pre-commit
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.8.0
+  #   hooks:
+  #     - id: mypy
+  #       name: Type check (mypy)
+  #       args: ['--config-file', 'pyproject.toml']
+  #       additional_dependencies:
+  #         - types-PyYAML
+  #         - types-requests
+  #         - pandas-stubs
+
+  # Jupyter notebook cleaning (remove outputs)
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.7.1
+    hooks:
+      - id: nbstripout
+        name: Strip notebook outputs
+        files: \.ipynb$
+
+# Configuration
+default_language_version:
+  python: python3.10
+
+fail_fast: false

@@ -1,0 +1,195 @@
+# =============================================================================
+# Trading Strategies Configuration
+# =============================================================================
+# This file contains configuration for all trading strategies.
+# Each strategy can be enabled/disabled and parameters can be tuned here.
+
+# =============================================================================
+# Global Strategy Settings
+# =============================================================================
+global:
+  # Default position sizing method: 'fixed_fractional' or 'kelly'
+  position_sizing_method: 'fixed_fractional'
+
+  # Risk management parameters
+  risk:
+    max_position_size: 0.2        # Maximum 20% of portfolio per position
+    stop_loss: 0.05               # 5% stop loss
+    take_profit: 0.10             # 10% take profit
+    max_portfolio_risk: 0.15      # Maximum 15% portfolio at risk
+    max_correlation: 0.7          # Maximum correlation between positions
+
+  # Kelly Criterion parameters (if using Kelly position sizing)
+  kelly:
+    win_rate: 0.55                # Historical win rate (55%)
+    avg_win_loss_ratio: 1.5       # Average win / average loss
+    fractional_kelly: 0.5         # Use half-Kelly for safety
+
+  # Transaction costs (for backtesting)
+  transaction_costs:
+    fixed_cost: 0.0               # Fixed cost per trade ($)
+    percentage_cost: 0.001        # 0.1% of trade value
+    slippage: 0.0005              # 0.05% slippage
+
+# =============================================================================
+# Mean Reversion Strategy (Bollinger Bands)
+# =============================================================================
+mean_reversion:
+  enabled: true
+
+  # Bollinger Bands parameters
+  window: 20                      # Rolling window for mean/std (20 periods)
+  num_std: 2.0                    # Number of standard deviations for bands
+
+  # Signal thresholds
+  entry_threshold: 0.9            # Enter when price is 90% to band (0.9 = near band)
+  exit_threshold: 0.5             # Exit when price crosses middle band (0.5 = at mean)
+
+  # Additional filters
+  min_volatility: 0.01            # Minimum volatility to trade (avoid low-volatility periods)
+  max_volatility: 0.10            # Maximum volatility to trade (avoid extreme volatility)
+
+  # Position sizing
+  position_sizing_method: 'fixed_fractional'  # Override global if needed
+  max_position_size: 0.15         # More conservative for mean reversion
+
+# =============================================================================
+# Momentum Strategy (Moving Average Crossover)
+# =============================================================================
+momentum:
+  enabled: true
+
+  # Moving average windows
+  fast_window: 10                 # Fast MA window (10 periods)
+  slow_window: 30                 # Slow MA window (30 periods)
+
+  # Signal parameters
+  signal_threshold: 0.02          # Minimum 2% difference between MAs to trigger signal
+  trend_confirmation: true        # Require price above/below both MAs for confirmation
+
+  # Trend filters
+  min_trend_strength: 0.01        # Minimum trend strength (MA slope)
+  use_volume_confirmation: false  # Require volume confirmation (if volume data available)
+
+  # Position sizing
+  position_sizing_method: 'fixed_fractional'
+  max_position_size: 0.20         # Standard position size for momentum
+
+# =============================================================================
+# Spread Trading Strategy (Inter-Market Arbitrage)
+# =============================================================================
+spread_trading:
+  enabled: true
+
+  # Spread calculation
+  spread_type: 'difference'       # 'difference' or 'ratio'
+  lookback_window: 60             # Window for spread statistics (60 periods)
+
+  # Entry/exit thresholds (z-scores)
+  entry_z_score: 2.0              # Enter when spread is 2 std devs from mean
+  exit_z_score: 0.5               # Exit when spread returns to 0.5 std devs from mean
+
+  # Hedge ratio
+  use_dynamic_hedge_ratio: true   # Recalculate hedge ratio periodically
+  hedge_ratio_window: 120         # Window for hedge ratio calculation
+
+  # Risk management
+  max_spread_deviation: 4.0       # Maximum z-score (avoid extreme outliers)
+  correlation_threshold: 0.7      # Minimum correlation between assets to trade spread
+
+  # Position sizing
+  position_sizing_method: 'fixed_fractional'
+  max_position_size: 0.25         # Can be larger for spread trades (hedged)
+
+# =============================================================================
+# Renewable Arbitrage Strategy (Generation-Based)
+# =============================================================================
+renewable_arbitrage:
+  enabled: true
+
+  # Forecast parameters
+  forecast_horizon: 24            # Hours ahead to forecast
+  use_ensemble_forecast: true     # Use ensemble forecasts for robustness
+
+  # Generation thresholds (capacity factors)
+  generation_threshold_high: 0.7  # 70% CF = high generation
+  generation_threshold_low: 0.3   # 30% CF = low generation
+
+  # Price-generation relationship
+  correlation_factor: -0.6        # Expected correlation (negative)
+  price_sensitivity: 0.5          # Weight of price forecast vs generation forecast (0-1)
+  price_impact_sensitivity: 0.1   # Sensitivity factor for generation's impact on price
+
+  # Curtailment parameters
+  consider_curtailment: true      # Factor in curtailment opportunities
+  curtailment_price_threshold: -5.0  # Curtail when prices below this ($/MWh)
+
+  # Renewable asset capacities (for portfolio)
+  wind_capacity_mw: 100.0
+  solar_capacity_mw: 100.0
+
+  # Position sizing
+  position_sizing_method: 'kelly' # Use Kelly for renewable arbitrage (more predictable)
+  max_position_size: 0.20
+
+  # Risk management
+  forecast_confidence_threshold: 0.6  # Minimum forecast confidence to trade
+  max_forecast_error: 0.15        # Maximum acceptable forecast error (15%)
+
+# =============================================================================
+# Strategy Combination & Portfolio Rules
+# =============================================================================
+portfolio:
+  # Allow multiple strategies to run simultaneously
+  allow_multiple_strategies: true
+
+  # Strategy weights (if combining signals)
+  strategy_weights:
+    mean_reversion: 0.25
+    momentum: 0.25
+    spread_trading: 0.25
+    renewable_arbitrage: 0.25
+
+  # Conflict resolution (when strategies give opposite signals)
+  conflict_resolution: 'weighted_average'  # 'weighted_average', 'strongest_signal', 'no_trade'
+
+  # Portfolio-level risk limits
+  max_total_exposure: 0.8         # Maximum 80% of portfolio deployed
+  max_strategies_per_asset: 2     # Maximum 2 strategies trading same asset
+
+  # Rebalancing
+  rebalancing_frequency: 'daily'  # 'hourly', 'daily', 'weekly'
+  rebalancing_threshold: 0.05     # Rebalance if allocation drifts > 5%
+
+# =============================================================================
+# Backtesting Configuration
+# =============================================================================
+backtesting:
+  # Initial capital
+  initial_capital: 1000000        # $1M starting capital
+
+  # Execution assumptions
+  execution_delay: 1              # Periods between signal and execution
+
+  # Market impact model
+  market_impact:
+    enabled: true
+    impact_coefficient: 0.1       # Price impact = coefficient * sqrt(order_size / avg_volume)
+    max_slippage: 0.05            # Maximum slippage (5%, clamped to prevent unrealistic values)
+
+  # Trade logging format
+  transaction_log_format: 'parquet'  # 'parquet' or 'csv' (default: 'parquet')
+
+  # Trade logging configuration
+  trade_logging:
+    db_enabled: false               # Enable database logging (requires SQLAlchemy and DB config)
+    db_table: 'trades'              # Database table name for trades
+
+  # Performance metrics to track
+  metrics:
+    - 'sharpe_ratio'
+    - 'sortino_ratio'
+    - 'max_drawdown'
+    - 'win_rate'
+    - 'profit_factor'
+    - 'calmar_ratio'
